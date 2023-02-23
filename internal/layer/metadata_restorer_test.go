@@ -131,12 +131,12 @@ func testLayerMetadataRestorer(t *testing.T, when spec.G, it spec.S) {
 				unsetFlags := "[types]"
 				for _, data := range []struct{ name, want string }{
 					// App layers.
-					{"metadata.buildpack/launch.toml", "[metadata]\n  launch-key = \"launch-value\""},
-					{"metadata.buildpack/launch-build-cache.toml", "[metadata]\n  launch-build-cache-key = \"launch-build-cache-value\""},
-					{"metadata.buildpack/launch-cache.toml", "[metadata]\n  launch-cache-key = \"launch-cache-value\""},
-					{"no.cache.buildpack/some-layer.toml", "[metadata]\n  some-layer-key = \"some-layer-value\""},
+					{"metadata.buildpack/launch.toml", "[metadata]\n  launch-key = 'launch-value'\n"},
+					{"metadata.buildpack/launch-build-cache.toml", "[metadata]\n  launch-build-cache-key = 'launch-build-cache-value'\n"},
+					{"metadata.buildpack/launch-cache.toml", "[metadata]\n  launch-cache-key = 'launch-cache-value'\n"},
+					{"no.cache.buildpack/some-layer.toml", "[metadata]\n  some-layer-key = 'some-layer-value'\n"},
 					// Cache-image-only layers.
-					{"metadata.buildpack/cache.toml", "[metadata]\n  cache-key = \"cache-value\""},
+					{"metadata.buildpack/cache.toml", "[metadata]\n  cache-key = 'cache-value'\n"},
 				} {
 					got := h.MustReadFile(t, filepath.Join(layerDir, data.name))
 					h.AssertStringContains(t, string(got), data.want)
@@ -155,8 +155,8 @@ func testLayerMetadataRestorer(t *testing.T, when spec.G, it spec.S) {
 					h.AssertNil(t, err)
 
 					for _, data := range []struct{ name, want string }{
-						{"metadata.buildpack/launch.toml", "build = false\nlaunch = true\ncache = false\n\n[metadata]\n  launch-key = \"launch-value\""},
-						{"no.cache.buildpack/some-layer.toml", "build = false\nlaunch = true\ncache = false\n\n[metadata]\n  some-layer-key = \"some-layer-value\""},
+						{"metadata.buildpack/launch.toml", "build = false\nlaunch = true\ncache = false\n\n[metadata]\n  launch-key = 'launch-value'"},
+						{"no.cache.buildpack/some-layer.toml", "build = false\nlaunch = true\ncache = false\n\n[metadata]\n  some-layer-key = 'some-layer-value'"},
 					} {
 						got := h.MustReadFile(t, filepath.Join(layerDir, data.name))
 						h.AssertStringContains(t, string(got), data.want)
@@ -176,8 +176,8 @@ func testLayerMetadataRestorer(t *testing.T, when spec.G, it spec.S) {
 
 					unsetFlags := "[types]"
 					for _, data := range []struct{ name, want string }{
-						{"metadata.buildpack/launch.toml", "[metadata]\n  launch-key = \"launch-value\""},
-						{"no.cache.buildpack/some-layer.toml", "[metadata]\n  some-layer-key = \"some-layer-value\""},
+						{"metadata.buildpack/launch.toml", "[metadata]\n  launch-key = 'launch-value'"},
+						{"no.cache.buildpack/some-layer.toml", "[metadata]\n  some-layer-key = 'some-layer-value'"},
 					} {
 						got := h.MustReadFile(t, filepath.Join(layerDir, data.name))
 						h.AssertStringContains(t, string(got), data.want)
@@ -231,7 +231,7 @@ func testLayerMetadataRestorer(t *testing.T, when spec.G, it spec.S) {
 					"metadata.buildpack/launch-cache.toml",
 				} {
 					got := h.MustReadFile(t, filepath.Join(layerDir, name))
-					avoid := "[metadata]\n  cache-only-key = \"cache-only-value\""
+					avoid := "[metadata]\n  cache-only-key = 'cache-only-value'"
 					if strings.Contains(string(got), avoid) {
 						t.Errorf("Expected %q to not contain %q, got %q", name, avoid, got)
 					}
@@ -298,7 +298,7 @@ func testLayerMetadataRestorer(t *testing.T, when spec.G, it spec.S) {
 
 				path := filepath.Join(layerDir, "escaped_buildpack_id", "escaped-bp-layer.toml")
 				got := h.MustReadFile(t, path)
-				want := "[metadata]\n  escaped-bp-layer-key = \"escaped-bp-layer-value\""
+				want := "[metadata]\n  escaped-bp-layer-key = 'escaped-bp-layer-value'"
 
 				h.AssertStringContains(t, string(got), want)
 			})
@@ -345,7 +345,7 @@ func testLayerMetadataRestorer(t *testing.T, when spec.G, it spec.S) {
 
 					path := filepath.Join(layerDir, "no.cache.buildpack", "some-layer.toml")
 					got := h.MustReadFile(t, path)
-					want := "[metadata]\n  some-layer-key = \"some-layer-value\""
+					want := "[metadata]\n  some-layer-key = 'some-layer-value'"
 
 					h.AssertStringContains(t, string(got), want)
 				})

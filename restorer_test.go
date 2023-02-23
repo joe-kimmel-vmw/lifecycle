@@ -338,7 +338,7 @@ func testRestorer(buildpackAPI, platformAPI string) func(t *testing.T, when spec
 						if api.MustParse(buildpackAPI).LessThan("0.6") {
 							meta = "build = false\nlaunch = false\ncache = true\n\n"
 						}
-						meta += "[metadata]\n  cache-only-key = \"cache-only-val\"\n"
+						meta += "[metadata]\n  cache-only-key = 'cache-only-val'\n"
 						var sha string
 						if api.MustParse(platformAPI).LessThan("0.7") {
 							sha = cacheOnlyLayerSHA
@@ -483,7 +483,7 @@ func testRestorer(buildpackAPI, platformAPI string) func(t *testing.T, when spec
 						if api.MustParse(buildpackAPI).LessThan("0.6") {
 							meta = "build = false\nlaunch = false\ncache = true\n\n"
 						}
-						meta += "[metadata]\n  escaped-bp-key = \"escaped-bp-val\"\n"
+						meta += "[metadata]\n  escaped-bp-key = 'escaped-bp-val'\n"
 						var sha string
 						if api.MustParse(platformAPI).LessThan("0.7") {
 							sha = escapedLayerSHA
@@ -566,17 +566,17 @@ func testRestorer(buildpackAPI, platformAPI string) func(t *testing.T, when spec
 							typesMeta = "build = false\nlaunch = false\ncache = true\n\n"
 						}
 
-						cacheOnlyMeta = typesMeta + "[metadata]\n  cache-only-key = \"cache-only-val\"\n"
+						cacheOnlyMeta = typesMeta + "[metadata]\n  cache-only-key = 'cache-only-val'\n"
 						h.AssertNil(t, writeLayer(layersDir, "buildpack.id", "cache-only", cacheOnlyMeta, cacheOnlySha))
 
-						escapedMeta = typesMeta + "[metadata]\n  escaped-bp-key = \"escaped-bp-val\"\n"
+						escapedMeta = typesMeta + "[metadata]\n  escaped-bp-key = 'escaped-bp-val'\n"
 						h.AssertNil(t, writeLayer(layersDir, "escaped_buildpack_id", "escaped-bp-layer", escapedMeta, escapedSha))
 
 						if api.MustParse(buildpackAPI).LessThan("0.6") {
 							typesMeta = "build = false\nlaunch = true\ncache = true\n\n"
 						}
 
-						cacheLaunchMeta = typesMeta + "[metadata]\n  cache-launch-key = \"cache-launch-val\"\n"
+						cacheLaunchMeta = typesMeta + "[metadata]\n  cache-launch-key = 'cache-launch-val'\n"
 						h.AssertNil(t, writeLayer(layersDir, "buildpack.id", "cache-launch", cacheLaunchMeta, cacheLaunchSha))
 
 						appMetaContents := []byte(fmt.Sprintf(`{

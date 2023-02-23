@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/BurntSushi/toml"
+	toml "github.com/pelletier/go-toml/v2"
 	"github.com/pkg/errors"
 )
 
@@ -43,17 +43,19 @@ func (e *ExecDRunner) ExecD(path string, env Env) error {
 		}
 	}()
 
-	out, err := io.ReadAll(pr)
-	if cmdErr := <-errChan; cmdErr != nil {
-		// prefer the error from the command
-		return errors.Wrapf(cmdErr, "failed to execute exec.d file at path '%s'", path)
-	} else if err != nil {
-		// return the read error only if the command succeeded
-		return errors.Wrapf(err, "failed to read output from exec.d file at path '%s'", path)
-	}
+	/*
+		out, err := io.ReadAll(pr)
+		if cmdErr := <-errChan; cmdErr != nil {
+			// prefer the error from the command
+			return errors.Wrapf(cmdErr, "failed to execute exec.d file at path '%s'", path)
+		} else if err != nil {
+			// return the read error only if the command succeeded
+			return errors.Wrapf(err, "failed to read output from exec.d file at path '%s'", path)
+		}*/
 
 	envVars := map[string]string{}
-	if _, err := toml.Decode(string(out), &envVars); err != nil {
+	dec := toml.NewDecoder(pr)
+	if err := dec.Decode(&envVars); err != nil {
 		return errors.Wrapf(err, "failed to decode output from exec.d file at path '%s'", path)
 	}
 	for k, v := range envVars {

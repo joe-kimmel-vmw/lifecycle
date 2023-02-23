@@ -792,7 +792,10 @@ func testBuild(t *testing.T, when spec.G, it spec.S) {
 								filepath.Join(appDir, "launch-A-v1.toml"),
 							)
 							_, err := executor.Build(descriptor, inputs, logger)
-							h.AssertError(t, err, "toml: incompatible types: TOML key \"processes.command\" has type string; destination has type slice")
+							h.AssertError(t, err, `
+2| command = "some-cmd"
+ |           ~~~~~~~~~~ cannot store TOML string into a Go slice
+error occurred at line 2 column 11`)
 						})
 
 						it("preserves command args", func() {
@@ -1350,7 +1353,7 @@ func testBuild(t *testing.T, when spec.G, it spec.S) {
 							filepath.Join(appDir, "launch-A-v1.toml"),
 						)
 						_, err := executor.Build(descriptor, inputs, logger)
-						h.AssertError(t, err, "toml: incompatible types: TOML key \"processes.command\" has type []interface {}; destination has type string")
+						h.AssertError(t, err, "toml: cannot decode TOML array into struct field buildpack.ProcessEntryBeforeV9.RawCommandValue of type string") // TODO unclear why the error isn't pretty printing in this case
 					})
 				})
 			})

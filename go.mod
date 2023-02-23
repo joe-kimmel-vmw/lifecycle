@@ -15,6 +15,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/heroku/color v0.0.6
 	github.com/moby/buildkit v0.11.1
+	github.com/pelletier/go-toml/v2 v2.0.6
 	github.com/pkg/errors v0.9.1
 	github.com/sclevine/spec v1.4.0
 	golang.org/x/sync v0.1.0

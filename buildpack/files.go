@@ -3,9 +3,11 @@
 package buildpack
 
 import (
+	"errors"
 	"fmt"
+	"os"
 
-	"github.com/BurntSushi/toml"
+	toml "github.com/pelletier/go-toml/v2"
 
 	"github.com/buildpacks/lifecycle/api"
 	"github.com/buildpacks/lifecycle/launch"
@@ -21,51 +23,100 @@ type LaunchTOML struct {
 	Slices    []layers.Slice `toml:"slices"`
 }
 
+// LaunchTOMLBeforeV9 exists so we can maintain backwards compaitibility forever
+type LaunchTOMLBeforeV9 struct {
+	BOM       []BOMEntry
+	Labels    []Label
+	Processes []ProcessEntryBeforeV9 `toml:"processes"`
+	Slices    []layers.Slice         `toml:"slices"`
+}
+
+// ProcessEntryBeforeV9 exists only for reading old files; we will shim this into the newer format by making a []string{RawCommandValue}
+type ProcessEntryBeforeV9 struct {
+	Type             string   `toml:"type" json:"type"`
+	Command          []string `toml:"-"` // ignored
+	RawCommandValue  string   `toml:"command" json:"command"`
+	Args             []string `toml:"args" json:"args"`
+	Direct           *bool    `toml:"direct" json:"direct"`
+	Default          bool     `toml:"default,omitempty" json:"default,omitempty"`
+	WorkingDirectory string   `toml:"working-dir,omitempty" json:"working-dir,omitempty"`
+}
+
 type ProcessEntry struct {
-	Type             string         `toml:"type" json:"type"`
-	Command          []string       `toml:"-"` // ignored
-	RawCommandValue  toml.Primitive `toml:"command" json:"command"`
-	Args             []string       `toml:"args" json:"args"`
-	Direct           *bool          `toml:"direct" json:"direct"`
-	Default          bool           `toml:"default,omitempty" json:"default,omitempty"`
-	WorkingDirectory string         `toml:"working-dir,omitempty" json:"working-dir,omitempty"`
+	Type             string   `toml:"type" json:"type"`
+	Command          []string `toml:"-"` // ignored
+	RawCommandValue  []string `toml:"command" json:"command"`
+	Args             []string `toml:"args" json:"args"`
+	Direct           *bool    `toml:"direct" json:"direct"`
+	Default          bool     `toml:"default,omitempty" json:"default,omitempty"`
+	WorkingDirectory string   `toml:"working-dir,omitempty" json:"working-dir,omitempty"`
 }
 
 // DecodeLaunchTOML reads a launch.toml file
 func DecodeLaunchTOML(launchPath string, bpAPI string, launchTOML *LaunchTOML) error {
 	// decode the common bits
-	md, err := toml.DecodeFile(launchPath, &launchTOML)
+	fs, err := os.Open(launchPath)
 	if err != nil {
 		return err
 	}
-
+	defer fs.Close() // serious question - should the defer be above the err!=nil block?
+	dec := toml.NewDecoder(fs)
 	// decode the process.commands, which differ based on buildpack API
 	commandsAreStrings := api.MustParse(bpAPI).LessThan("0.9")
+	if commandsAreStrings {
+		ltb := LaunchTOMLBeforeV9{}
+		if err = dec.Decode(&ltb); err != nil {
+			var derr *toml.DecodeError
+			if errors.As(err, &derr) {
+				row, col := derr.Position()
+				return fmt.Errorf("%s\nerror occurred at line %d column %d", derr.String(), row, col)
+			}
+			return err
+		}
+		// TODO refactor into a method to hide our shame but not actually decrease it.
+		launchTOML.BOM = ltb.BOM
+		launchTOML.Labels = ltb.Labels
+		launchTOML.Slices = ltb.Slices
+		for _, proc := range ltb.Processes {
+			np := ProcessEntry{}
+			np.Args = proc.Args
+			np.Command = proc.Command
+			np.Default = proc.Default
+			np.Direct = proc.Direct
+			np.Type = proc.Type
+			np.WorkingDirectory = proc.WorkingDirectory
+			if len(proc.RawCommandValue) > 0 {
+				np.RawCommandValue = []string{proc.RawCommandValue}
+			}
+			launchTOML.Processes = append(launchTOML.Processes, np)
+		}
+	} else {
+		if err = dec.Decode(launchTOML); err != nil {
+			var derr *toml.DecodeError
+			if errors.As(err, &derr) {
+				row, col := derr.Position()
+				return fmt.Errorf("%s\nerror occurred at line %d column %d", derr.String(), row, col)
+			}
+			return err
+		}
+	}
 
 	// processes are defined differently depending on API version
 	// and will be decoded into different values
 	for i, process := range launchTOML.Processes {
-		if commandsAreStrings {
-			var commandString string
-			if err = md.PrimitiveDecode(process.RawCommandValue, &commandString); err != nil {
-				return err
-			}
+		if commandsAreStrings { // by now it's really "commandsWereStrings" but that's cool.
 			// legacy Direct defaults to false
 			if process.Direct == nil {
 				direct := false
 				launchTOML.Processes[i].Direct = &direct
 			}
-			launchTOML.Processes[i].Command = []string{commandString}
+			launchTOML.Processes[i].Command = process.RawCommandValue
 		} else {
 			// direct is no longer allowed as a key
 			if process.Direct != nil {
 				return fmt.Errorf("process.direct is not supported on this buildpack version")
 			}
-			var command []string
-			if err = md.PrimitiveDecode(process.RawCommandValue, &command); err != nil {
-				return err
-			}
-			launchTOML.Processes[i].Command = command
+			launchTOML.Processes[i].Command = process.RawCommandValue
 		}
 	}
 

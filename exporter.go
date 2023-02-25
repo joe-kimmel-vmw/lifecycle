@@ -8,13 +8,13 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/BurntSushi/toml"
 	"github.com/buildpacks/imgutil"
 	"github.com/pkg/errors"
 
 	"github.com/buildpacks/lifecycle/api"
 	"github.com/buildpacks/lifecycle/buildpack"
 	"github.com/buildpacks/lifecycle/internal/fsutil"
+	"github.com/buildpacks/lifecycle/internal/toml"
 	"github.com/buildpacks/lifecycle/launch"
 	"github.com/buildpacks/lifecycle/layers"
 	"github.com/buildpacks/lifecycle/log"
@@ -545,7 +545,7 @@ func (e *Exporter) makeBuildReport(layersDir string) (platform.BuildReport, erro
 		}
 		var bpBuildReport platform.BuildReport
 		bpBuildTOML := filepath.Join(layersDir, launch.EscapeID(bp.ID), "build.toml")
-		if _, err := toml.DecodeFile(bpBuildTOML, &bpBuildReport); err != nil && !os.IsNotExist(err) {
+		if err := toml.DecodeFile(bpBuildTOML, &bpBuildReport); err != nil && !os.IsNotExist(err) {
 			return platform.BuildReport{}, err
 		}
 		out = append(out, buildpack.WithBuildpack(bp, bpBuildReport.BOM)...)

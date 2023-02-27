@@ -1,6 +1,7 @@
 package launch
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"path"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/pelletier/go-toml/v2"
 
 	"github.com/buildpacks/lifecycle/api"
 )
@@ -44,6 +46,38 @@ func (p Process) WithPlatformAPI(platformAPI *api.Version) Process {
 		p.Command.Entries = []string{p.Command.Entries[0]}
 	}
 	return p
+}
+
+// MarshalTOML - TODO -- there's a unit test in launch_test ("output command is array") that asserts that some funky marshalling happens
+// but i have no idea how it was being achieved before!!!
+func (p Process) MarshalTOML() ([]byte, error) {
+	fmt.Println("\nHI MOM!!!!!\n========")
+	// this differs from the OG struct bc only in that it has a Command []string , which seems to be how we want to output it.
+	type forMarshalling struct {
+		Type             string       `toml:"type" json:"type"`
+		Command          []string     `toml:"command" json:"command"`
+		Args             []string     `toml:"args" json:"args"`
+		Direct           bool         `toml:"direct" json:"direct"`
+		Default          bool         `toml:"default,omitempty" json:"default,omitempty"`
+		BuildpackID      string       `toml:"buildpack-id" json:"buildpackID"`
+		WorkingDirectory string       `toml:"working-dir,omitempty" json:"working-dir,omitempty"`
+		PlatformAPI      *api.Version `toml:"-" json:"-"`
+	}
+
+	fm := forMarshalling{
+		Type:             p.Type,
+		Command:          p.Command.Entries,
+		Args:             p.Args,
+		Direct:           p.Direct,
+		Default:          p.Default,
+		BuildpackID:      p.BuildpackID,
+		WorkingDirectory: p.WorkingDirectory,
+		PlatformAPI:      p.PlatformAPI,
+	}
+
+	var buf bytes.Buffer
+	err := toml.NewEncoder(&buf).SetIndentTables(true).Encode(fm)
+	return buf.Bytes(), err
 }
 
 type RawCommand struct {

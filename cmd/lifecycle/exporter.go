@@ -10,7 +10,6 @@ import (
 	"github.com/buildpacks/imgutil/layout"
 	"github.com/google/go-containerregistry/pkg/name"
 
-	"github.com/BurntSushi/toml"
 	"github.com/buildpacks/imgutil"
 	"github.com/buildpacks/imgutil/local"
 	"github.com/buildpacks/imgutil/remote"
@@ -25,6 +24,7 @@ import (
 	"github.com/buildpacks/lifecycle/cmd"
 	"github.com/buildpacks/lifecycle/cmd/lifecycle/cli"
 	"github.com/buildpacks/lifecycle/internal/encoding"
+	"github.com/buildpacks/lifecycle/internal/toml"
 	"github.com/buildpacks/lifecycle/layers"
 	"github.com/buildpacks/lifecycle/platform"
 	"github.com/buildpacks/lifecycle/priv"
@@ -152,7 +152,7 @@ func (e *exportCmd) export(group buildpack.Group, cacheStore lifecycle.Cache, an
 	defer os.RemoveAll(artifactsDir)
 
 	var projectMD platform.ProjectMetadata
-	_, err = toml.DecodeFile(e.ProjectMetadataPath, &projectMD)
+	err = toml.DecodeFile(e.ProjectMetadataPath, &projectMD)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return err

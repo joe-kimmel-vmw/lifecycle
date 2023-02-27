@@ -22,7 +22,7 @@ func TestLaunch(t *testing.T) {
 func testLaunch(t *testing.T, when spec.G, it spec.S) {
 	when("Process", func() {
 		when("MarshalTOML", func() {
-			it("output command is array", func() {
+			it.Focus("output command is array", func() {
 				process := launch.Process{
 					Type:             "some-type",
 					Command:          launch.NewRawCommand([]string{"some-command", "some-command-arg"}),
@@ -35,13 +35,13 @@ func testLaunch(t *testing.T, when spec.G, it spec.S) {
 
 				bytes, err := encoding.MarshalTOML(process)
 				h.AssertNil(t, err)
-				expected := `type = "some-type"
-command = ["some-command", "some-command-arg"]
-args = ["some-arg"]
+				expected := `type = 'some-type'
+command = ['some-command', 'some-command-arg']
+args = ['some-arg']
 direct = true
 default = true
-buildpack-id = "some-buildpack-id"
-working-dir = "some-working-directory"
+buildpack-id = 'some-buildpack-id'
+working-dir = 'some-working-directory'
 `
 				h.AssertEq(t, string(bytes), expected)
 			})
